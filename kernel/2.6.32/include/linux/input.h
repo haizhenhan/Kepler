@@ -41,10 +41,10 @@ struct input_event {
  */
 
 struct input_id {
-	__u16 bustype;
-	__u16 vendor;
-	__u16 product;
-	__u16 version;
+	__u16 bustype;	/* 总线类型 */
+	__u16 vendor;	/* 生成厂商 */
+	__u16 product;	/* 产品类型 */
+	__u16 version;	/* 版本 */
 };
 
 struct input_absinfo {
@@ -997,6 +997,8 @@ struct ff_effect {
 #include <linux/mod_devicetable.h>
 
 /**
+ * 每个input_dev都都代表着一个input设备。设备注册的时候会
+ * 将input_dev链接到input_dev_list这个全局链表里
  * struct input_dev - represents an input device
  * @name: name of the device
  * @phys: physical path to the device in the system hierarchy
@@ -1070,41 +1072,41 @@ struct ff_effect {
  * @node: used to place the device onto input_dev_list
  */
 struct input_dev {
-	const char *name;
-	const char *phys;
-	const char *uniq;
-	struct input_id id;
+	const char *name;	/* 设备名 */
+	const char *phys;	/* 设备在系统中的物理路径 */
+	const char *uniq;	/* 设备的唯一标识名 */
+	struct input_id id; /* 设备ID, 与 input_handler 匹配时会用到. 子系统核心是通过他们. 将设备驱动与事件处理层联系起来的 */
 
-	unsigned long evbit[BITS_TO_LONGS(EV_CNT)];
-	unsigned long keybit[BITS_TO_LONGS(KEY_CNT)];
-	unsigned long relbit[BITS_TO_LONGS(REL_CNT)];
-	unsigned long absbit[BITS_TO_LONGS(ABS_CNT)];
-	unsigned long mscbit[BITS_TO_LONGS(MSC_CNT)];
-	unsigned long ledbit[BITS_TO_LONGS(LED_CNT)];
-	unsigned long sndbit[BITS_TO_LONGS(SND_CNT)];
-	unsigned long ffbit[BITS_TO_LONGS(FF_CNT)];
-	unsigned long swbit[BITS_TO_LONGS(SW_CNT)];
+	unsigned long evbit[BITS_TO_LONGS(EV_CNT)];		/* 设备支持的事件类型 */
+	unsigned long keybit[BITS_TO_LONGS(KEY_CNT)];	/* 按键事件：支持的具体按键 */
+	unsigned long relbit[BITS_TO_LONGS(REL_CNT)];	/* 相对坐标：具体的相对坐标 */
+	unsigned long absbit[BITS_TO_LONGS(ABS_CNT)];	/* 绝对坐标：具体的绝对坐标 */
+	unsigned long mscbit[BITS_TO_LONGS(MSC_CNT)];	/* 混杂事件：具体的混杂事件 */
+	unsigned long ledbit[BITS_TO_LONGS(LED_CNT)];	/* LED事件：具体的动作 */
+	unsigned long sndbit[BITS_TO_LONGS(SND_CNT)];	/* 蜂鸣器事件：具体的动作 */
+	unsigned long ffbit[BITS_TO_LONGS(FF_CNT)];		/* 力反馈事件：具体的动作 */
+	unsigned long swbit[BITS_TO_LONGS(SW_CNT)];		/* 开关事件：具体的动作 */
 
-	unsigned int keycodemax;
-	unsigned int keycodesize;
-	void *keycode;
-	int (*setkeycode)(struct input_dev *dev, int scancode, int keycode);
-	int (*getkeycode)(struct input_dev *dev, int scancode, int *keycode);
+	unsigned int keycodemax;	/* 设备支持的最大按键值个数 */
+	unsigned int keycodesize;	/* 每个按键的字节大小 */
+	void *keycode;				/* 设备的键盘码表 */
+	int (*setkeycode)(struct input_dev *dev, int scancode, int keycode); 	/* 修改键盘码表 */
+	int (*getkeycode)(struct input_dev *dev, int scancode, int *keycode);	/* 获取键盘码表 s*/
 
-	struct ff_device *ff;
+	struct ff_device *ff;	/* 如果设备支持力反馈，则该成员将指向力反馈的设备描述结构 */
 
-	unsigned int repeat_key;
-	struct timer_list timer;
+	unsigned int repeat_key;	/* 保存上一个键值，实现软件自动重复按键 */
+	struct timer_list timer;	/* 用于软件自动重复按键的定时器 */
 
 	int sync;
 
 	int abs[ABS_MAX + 1];
 	int rep[REP_MAX + 1];
 
-	unsigned long key[BITS_TO_LONGS(KEY_CNT)];
-	unsigned long led[BITS_TO_LONGS(LED_CNT)];
-	unsigned long snd[BITS_TO_LONGS(SND_CNT)];
-	unsigned long sw[BITS_TO_LONGS(SW_CNT)];
+	unsigned long key[BITS_TO_LONGS(KEY_CNT)];	/* 反映设备按键按钮的当前状态 */
+	unsigned long led[BITS_TO_LONGS(LED_CNT)];  /* 反映设备LED的当前状态 */
+	unsigned long snd[BITS_TO_LONGS(SND_CNT)];	/* 反映设备蜂鸣器的当前状态 */
+	unsigned long sw[BITS_TO_LONGS(SW_CNT)];	/* 反映设备开关的当前状态 */
 
 	int absmax[ABS_MAX + 1];
 	int absmin[ABS_MAX + 1];
@@ -1112,10 +1114,10 @@ struct input_dev {
 	int absflat[ABS_MAX + 1];
 	int absres[ABS_MAX + 1];
 
-	int (*open)(struct input_dev *dev);
-	void (*close)(struct input_dev *dev);
-	int (*flush)(struct input_dev *dev, struct file *file);
-	int (*event)(struct input_dev *dev, unsigned int type, unsigned int code, int value);
+	int (*open)(struct input_dev *dev); /* 输入设备打开函数 */
+	void (*close)(struct input_dev *dev);	/* 输入设备关闭函数 */
+	int (*flush)(struct input_dev *dev, struct file *file); /* 输入设备刷新函数 */
+	int (*event)(struct input_dev *dev, unsigned int type, unsigned int code, int value); /* 发送给事件层handler去处理 */
 
 	struct input_handle *grab;
 
@@ -1127,8 +1129,8 @@ struct input_dev {
 
 	struct device dev;
 
-	struct list_head	h_list;
-	struct list_head	node;
+	struct list_head	h_list;	/* handle的链表 */
+	struct list_head	node; /* 通过这个结点，将dev挂到input_dev_list上 */
 };
 #define to_input_dev(d) container_of(d, struct input_dev, dev)
 
@@ -1184,6 +1186,9 @@ struct input_dev {
 struct input_handle;
 
 /**
+ * 对于不同的handler，都包含有一个名为input_handler的结构体
+ * 一个handler就是一个解决方案, 事件处理器注册的时候会将它链接
+ * 到input_handler_list这个全局链表里
  * struct input_handler - implements one of interfaces for input devices
  * @private: driver-specific data
  * @event: event handler. This method is being called by input core with

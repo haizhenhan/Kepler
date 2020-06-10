@@ -1838,16 +1838,19 @@ static int __init input_init(void)
 
 	input_init_abs_bypass();
 
+	/* 创建一个 input_class 类, 在sysfs中的表现为所有 input device 都位于/dev/class/input下 */
 	err = class_register(&input_class);
 	if (err) {
 		printk(KERN_ERR "input: unable to register input_dev class\n");
 		return err;
 	}
 
+	/* 在/proc下创建入口项，即/proc/bus/input目录产生设备信息 */
 	err = input_proc_init();
 	if (err)
 		goto fail1;
 
+	/* 注册字符设备input，主设备号为13 (#define INPUT_MAJOR13) */
 	err = register_chrdev(INPUT_MAJOR, "input", &input_fops);
 	if (err) {
 		printk(KERN_ERR "input: unable to register char major %d", INPUT_MAJOR);
